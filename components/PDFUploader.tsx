@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { Upload, FileText, Loader2, AlertCircle, ShieldCheck, Zap, Target } from 'lucide-react';
+import { Upload, Loader2, AlertCircle, ShieldCheck, Zap, Target } from 'lucide-react';
 
 interface PDFUploaderProps {
   onContentExtracted: (text: string) => void;
@@ -14,8 +14,13 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onContentExtracted, isProcess
   const extractText = async (file: File) => {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      // @ts-ignore
-      const pdfjsLib = window['pdfjs-dist/build/pdf'];
+      
+      // الحصول على مرجع المكتبة بشكل آمن من النافذة العالمية
+      const pdfjsLib = (window as any).pdfjsLib;
+      if (!pdfjsLib) {
+        throw new Error("مكتبة PDF غير محملة بعد. يرجى تحديث الصفحة.");
+      }
+
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -29,12 +34,12 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onContentExtracted, isProcess
       }
 
       if (fullText.trim().length < 50) {
-        throw new Error("الملف لا يحتوي على نص كافٍ للتحليل. تأكد من جودته.");
+        throw new Error("الملف لا يحتوي على نص كافٍ للتحليل. تأكد من أنه ملف نصي وليس مجرد صور.");
       }
 
       onContentExtracted(fullText);
     } catch (err: any) {
-      console.error(err);
+      console.error("PDF Extraction Error:", err);
       setError(err.message || "فشل قراءة الملف. حاول مرة أخرى.");
     }
   };
@@ -44,8 +49,8 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onContentExtracted, isProcess
     if (file && file.type === 'application/pdf') {
       setError(null);
       extractText(file);
-    } else {
-      setError("يرجى اختيار ملف PDF صالح.");
+    } else if (file) {
+      setError("يرجى اختيار ملف بصيغة PDF فقط.");
     }
   };
 
