@@ -2,9 +2,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { StudyData } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export const processContent = async (text: string): Promise<StudyData> => {
+  // إنشاء المثيل داخل الدالة لضمان استقرار التشغيل
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const model = "gemini-3-flash-preview";
 
   const prompt = `
