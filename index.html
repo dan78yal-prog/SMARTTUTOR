@@ -16,27 +16,29 @@
         background-color: #fcfdff;
         margin: 0;
       }
-      /* إخفاء شريط التمرير الافتراضي لشكل أكثر عصرية */
-      ::-webkit-scrollbar {
-        width: 8px;
+      #root:empty::before {
+        content: "";
+        display: block;
+        width: 50px;
+        height: 50px;
+        border: 5px solid #e2e8f0;
+        border-top-color: #4f46e5;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin: -25px 0 0 -25px;
       }
-      ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 10px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-      }
+      @keyframes spin { to { transform: rotate(360deg); } }
     </style>
     <script>
-      // إصلاح مشكلة الصفحة البيضاء: تعريف محاكي لبيئة Node.js في المتصفح
-      window.process = window.process || {
+      // إصلاح مشكلة كائن process في المتصفح
+      window.process = {
         env: {
           NODE_ENV: 'production',
-          API_KEY: '' // سيتم استخدامه من قبل المكتبات التي تبحث عن process.env
+          // سيتم محاولة جلب المفتاح من نظام Netlify أو البيئة المحيطة
+          API_KEY: "" 
         }
       };
     </script>
@@ -57,6 +59,7 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- ملاحظة: عند الرفع يدوياً لـ Netlify يفضل تحويل index.tsx لـ index.js عبر build step -->
     <script type="module" src="index.tsx"></script>
   </body>
 </html>
