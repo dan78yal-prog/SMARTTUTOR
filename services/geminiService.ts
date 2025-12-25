@@ -3,12 +3,14 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { StudyData } from "../types";
 
 export const processContent = async (text: string): Promise<StudyData> => {
+  // جلب المفتاح مباشرة من البيئة
   const apiKey = process.env.API_KEY;
   
-  if (!apiKey || apiKey === "") {
-    throw new Error("مفتاح الـ API غير متوفر. إذا كنت تستخدم Netlify، يرجى التأكد من إضافة API_KEY في إعدادات البيئة (Environment Variables).");
+  if (!apiKey || apiKey.trim() === "") {
+    throw new Error("مفتاح الـ API غير متوفر حالياً. يرجى التأكد من إضافة API_KEY في إعدادات البيئة بـ Netlify ثم إعادة بناء الموقع (Clear Cache and Deploy).");
   }
 
+  // إنشاء العميل
   const ai = new GoogleGenAI({ apiKey });
   const model = "gemini-3-flash-preview";
 
@@ -17,12 +19,12 @@ export const processContent = async (text: string): Promise<StudyData> => {
     
     المطلوب:
     1. موضوع الرحلة وهدف تعليمي رئيسي.
-    2. تقسيم المحتوى إلى 3-4 دروس احترافية.
-    3. لكل درس: (العنوان، المحتوى الشرحي، ملخص، نقاط أساسية، ملاحظات معمقة "Deep Dive"، وتنبيهات ذكية).
-    4. اختبار تقييمي (5 أسئلة متنوعة).
+    2. تقسيم المحتوى إلى 3-4 دروس احترافية (شرح مفصل وممتع).
+    3. لكل درس: (العنوان، المحتوى الشرحي، ملخص، نقاط أساسية، ملاحظات معمقة، وتنبيهات ذكية).
+    4. اختبار تقييمي (5 أسئلة متنوعة الصعوبة).
     
-    النص:
-    ${text.substring(0, 20000)}
+    النص المستخرج:
+    ${text.substring(0, 15000)}
   `;
 
   try {
@@ -83,13 +85,20 @@ export const processContent = async (text: string): Promise<StudyData> => {
     });
 
     const textOutput = response.text;
-    if (!textOutput) throw new Error("لم يتم استلام رد صالح من الذكاء الاصطناعي.");
+    if (!textOutput) throw new Error("لم يتمكن الذكاء الاصطناعي من تحليل النص. حاول مرة أخرى.");
+    
     return JSON.parse(textOutput.trim()) as StudyData;
   } catch (error: any) {
-    console.error("Gemini Error:", error);
-    if (error.message?.includes("401") || error.message?.includes("API key")) {
-      throw new Error("خطأ في صلاحية الـ API. يرجى التأكد من صحة المفتاح المستخدم.");
+    console.error("Gemini Process Error:", error);
+    
+    if (error.message?.includes("API_KEY_INVALID") || error.message?.includes("401")) {
+      throw new Error("مفتاح الـ API المستخدم غير صالح. يرجى مراجعة المفتاح في إعدادات Netlify.");
     }
-    throw new Error(error.message || "حدث خطأ أثناء معالجة البيانات.");
+    
+    if (error.message?.includes("429")) {
+      throw new Error("لقد تجاوزت حد الاستخدام المجاني للـ API. يرجى الانتظار قليلاً ثم المحاولة.");
+    }
+
+    throw new Error(error.message || "حدث خطأ غير متوقع أثناء معالجة الملف.");
   }
 };
